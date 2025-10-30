@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 pipeline {
     agent any
 
@@ -28,3 +29,65 @@ pipeline {
         }
     }
 }
+=======
+pipeline {
+    agent any
+
+    environment {
+        // Optional: Add Jenkins credentials later if you want to store the Groq API key securely
+        // GROQ_API_KEY = credentials('GROQ_API_KEY')
+    }
+
+    stages {
+
+        stage('Pull from GitHub') {
+            steps {
+                echo '📦 Pulling latest code from GitHub...'
+                git branch: 'main', url: 'https://github.com/Sankeerth2005/ai-text-rewriter.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo '🐳 Building Docker image...'
+                // No sudo needed after adding Jenkins to docker group
+                sh 'docker build -t ai-text-rewriter:latest .'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                echo '🛑 Stopping any existing containers...'
+                // Stop and remove only your app container, ignore errors if none exist
+                sh '''
+                    docker ps -q --filter "name=ai-text-rewriter" | xargs -r docker stop || true
+                    docker ps -a -q --filter "name=ai-text-rewriter" | xargs -r docker rm || true
+                '''
+            }
+        }
+
+        stage('Run New Container') {
+            steps {
+                echo '🚀 Starting new container...'
+                sh '''
+                    docker run -d \
+                        --name ai-text-rewriter \
+                        -p 8501:8501 \
+                        --env-file .env \
+                        ai-text-rewriter:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Deployment successful! App is live at http://<your-ec2-public-ip>:8501'
+        }
+        failure {
+            echo '❌ Deployment failed — check Jenkins logs for details.'
+        }
+    }
+}
+
+>>>>>>> db2388f (Improved Jenkinsfile for automated Docker deploy)
