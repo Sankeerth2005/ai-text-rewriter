@@ -1,9 +1,3 @@
-<<<<<<< HEAD
 streamlit
 requests
 python-dotenv
-=======
-streamlit
-requests
-python-dotenv
->>>>>>> db2388f (Improved Jenkinsfile for automated Docker deploy)
