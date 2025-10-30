@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 pipeline {
     agent any
 
@@ -29,7 +28,6 @@ pipeline {
         }
     }
 }
-=======
 pipeline {
     agent any
 
@@ -89,5 +87,3 @@ pipeline {
         }
     }
 }
-
->>>>>>> db2388f (Improved Jenkinsfile for automated Docker deploy)
