@@ -7,36 +7,41 @@ on:
 
 jobs:
   deploy:
+    name: Deploy to EC2
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      # Step 1 — Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      # Step 2 — Build Docker image
+      - name: Build Docker image
+        run: |
+          docker build -t ai-text-rewriter:latest .
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      # Step 3 — Log in to Docker Hub
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "sankeerth05" --password-stdin
 
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/ai-text-rewriter:latest
+      # Step 4 — Push image to Docker Hub
+      - name: Push Docker image
+        run: |
+          docker tag ai-text-rewriter:latest sankeerth05/ai-text-rewriter:latest
+          docker push sankeerth05/ai-text-rewriter:latest
 
-      - name: Deploy on AWS EC2
+      # Step 5 — Deploy on EC2 via SSH
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKER_HUB_USERNAME }}/ai-text-rewriter:latest
+            cd /home/ubuntu/ai-text-rewriter
+            git pull origin main || true
+            docker pull sankeerth05/ai-text-rewriter:latest
             docker stop $(docker ps -aq) || true
             docker rm $(docker ps -aq) || true
-            docker run -d -p 8501:8501 --env-file .env ${{ secrets.DOCKER_HUB_USERNAME }}/ai-text-rewriter:latest
+            docker run -d -p 8501:8501 --env-file /home/ubuntu/ai-text-rewriter/.env sankeerth05/ai-text-rewriter:latest
+
